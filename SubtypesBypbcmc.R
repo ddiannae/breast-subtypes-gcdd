@@ -3,10 +3,6 @@ library("BiocParallel")
 library("ggplot2")
 library("reshape2")
 library ("png") 
-library("grid")
-library("gridExtra")
-library("parallel")
-
 library("NOISeq")
 
 setwd("/mnt/ddisk/transpipeline-data/breast-data/subtypes")
@@ -19,17 +15,6 @@ genes <- genes[!duplicated(genes$Gene.stable.ID), c("Gene.stable.ID", "HGNC.symb
 names(genes)<-c("probe", "NCBI.gene.symbol", "EntrezGene.ID")
 rownames(genes) <- genes$probe
 
-#### Get File Info
-norm.data.cpm10$Targets$FileName = paste(substring(norm.data.cpm10$Targets$File,20, length(norm.data.cpm10$Targets$File)), "gz", sep=".")
-filenames.cancer <- norm.data.cpm10$Targets[norm.data.cpm10$Targets$Group == "T", "FileName"]
-#write.table(filenames.cancer, file = "/mnt/ddisk/transpipeline-data/annotations/filenames-breast-cancer.2019-01-09.tsv", sep="\t", quote=T, row.names=FALSE)
-filenames.healthy <- norm.data.cpm10$Targets[norm.data.cpm10$Targets$Group == "N", "FileName"]
-norm.data.cpm10$Targets[norm.data.cpm10$Targets$Group == "N", "FileName"]substring(filenames.healthy, 2, length(filenames.healthy))
-#write.table(filenames.healthy, file = "/mnt/ddisk/transpipeline-data/annotations/filenames-breast-healthy.2019-01-09.tsv", sep="\t", quote=T, row.names=FALSE)
-
-exp.caseids = read.csv("/mnt/ddisk/transpipeline-data/breast-data-cnvs/exp-caseids-cancer.csv", header = T, col.names = c("FileName", "SubmitterID", "CaseID", "FileID"), stringsAsFactors = F)
-fileNames.cancer <- data.subtypes.arsyn$Targets["Group" == "T", "fileName"]
-
 M <- norm.data.cpm10$M[genes$probe, norm.data.cpm10$Targets$Group == "T"]
 pam50obj <- PAM50(exprs=log2(1+ M), annotation=genes)
 
@@ -39,51 +24,36 @@ head(classification(pam50obj))
 parameters(pam50obj)
 
 ### Troubles with the original permutate function
-pam50obj <- permutate(pam50obj, BPPARAM = MulticoreParam(workers = 7, progressbar = TRUE),  pCutoff = 0.03,  corCutoff = 0.08)
-# pCutoff= 0.01 -> 34 samples Assigned
-# pCutoff= 0.05 -> 134 samples Assigned
-# pCutoff= 0.1, corCutoff = 0.05 -> 207 samples Assigned
-# pCutoff = 0.1,  corCutoff = 0.01 -> 225 samples Assigned
-
-# pCutoff = 0.25,  corCutoff = 0.01 -> [1] 415    
+pam50obj <- permutate(pam50obj, BPPARAM = MulticoreParam(workers = 7, progressbar = TRUE),  pCutoff = 0.05,  corCutoff = 0.05)
 subtypes <- permutation(pam50obj)$subtype
-dim(subtypes[subtypes$Permuted == "Assigned", ])
-dim(subtypes[subtypes$Permuted == "Assigned" & subtypes$Subtype == "LumA", ])
-# [1] 197   5
-dim(subtypes[subtypes$Permuted == "Assigned" & subtypes$Subtype == "LumB", ])
-# [1] 171  5
-dim(subtypes[subtypes$Permuted == "Assigned" & subtypes$Subtype == "Basal", ])
-# [1] 216  5
-dim(subtypes[subtypes$Permuted == "Assigned" & subtypes$Subtype == "Her2", ])
-# [1] 88
-dim(subtypes[subtypes$Permuted == "Ambiguous", ])
-# [1] 116  5
 
-save(pam50obj, file = "pam50obj_0.30p_0.01c.RData", compress="xz")
+dim(subtypes[subtypes$Permuted == "Assigned" & subtypes$Subtype == "LumA", ])
+# [1] 217   5
+dim(subtypes[subtypes$Permuted == "Assigned" & subtypes$Subtype == "LumB", ])
+# [1] 192   5
+dim(subtypes[subtypes$Permuted == "Assigned" & subtypes$Subtype == "Basal", ])
+# [1] 221   5
+dim(subtypes[subtypes$Permuted == "Assigned" & subtypes$Subtype == "Her2", ])
+# [1] 105   5
+
 assigned.subtypes <- subtypes[subtypes$Permuted == "Assigned", ]
 assigned.subtypes$ID <- rownames(assigned.subtypes)
 assigned.subtypes <- assigned.subtypes[, c("ID", "Subtype")]
+assigned.subtypes  <- assigned.subtypes [assigned.subtypes$Subtype != "Normal", ]
+
 healthy.subtypes <- norm.data.cpm10$Targets[norm.data.cpm10$Targets$Group == "N", "ID", drop = FALSE]
 healthy.subtypes$Subtype <- "Healthy"
 assigned.subtypes <- rbind(assigned.subtypes, healthy.subtypes)
-#load( "pam50obj_0.30p_0.01c.RData")
-targets.merged <- merge(exp.caseids, norm.data.cpm10$Targets, by = "FileName" )
-targets.merged <- merge(assigned.subtypes, targets.merged, by = "ID" )
-rownames(targets.merged) <- targets.merged$ID
-targets.merged <- targets.merged[, c("ID","Subtype","FileName","SubmitterID","CaseID")]
-targets.merged <- targets.merged[targets.merged$Subtype != "Normal", ]
-colnames(targets.merged)
 
-write.table(targets.merged, file = "caseid-filename-subtype.tsv", sep="\t", row.names = F, col.names = T, quote = F)
+write.table(assigned.subtypes, file = "id-subtype.tsv", sep="\t", row.names = F, col.names = T, quote = F)
 
 PLOTSDIR <- "/mnt/ddisk/transpipeline-data/breast-data/subtypes/plots"
 #targets.merged <- read.delim("caseid-filename-subtype.tsv", sep="\t", header = T )
 
 ## Filtrar solo tumores con subtipos
-targets.merged <- merge(norm.data.cpm10$Targets, targets.merged, by= "ID", all.x = T)
+targets.merged <- merge(norm.data.cpm10$Targets, assigned.subtypes, by= "ID")
 rownames(targets.merged) <- targets.merged$ID
-targets.merged[targets.merged$Group == "N", "Subtype"] <- "Healthy"
-targets.merged <- targets.merged[!is.na(targets.merged$Subtype), ]
+
 data.subtypes <- list(M=norm.data.cpm10$M[, rownames(targets.merged)], 
                       Annot=norm.data.cpm10$Annot[, ], 
                       Targets=targets.merged)
@@ -92,14 +62,14 @@ data.subtypes <- list(M=norm.data.cpm10$M[, rownames(targets.merged)],
 pca.results <- pca.results <- PCA.GENES(t(log2(1 + data.subtypes$M)))
   
 ## Variance explained by each component
-pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_PCAVariance.pdf", sep="/"), 
+pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_PCAVariance_2.pdf", sep="/"), 
       width = 4*2, height = 4*2)
 barplot(pca.results$var.exp[,1], xlab = "PC", ylab = "Explained variance")
 dev.off()
 cat("PCA variance norm plot generated.\n")
   
 ## Loading plot
-pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_PCALoading.pdf", sep="/"), 
+pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_PCALoading_2.pdf", sep="/"), 
       width = 4*2, height = 4*2)
   plot(pca.results$loadings[,1:2], col = 1, pch = 20, cex = 0.5,
        xlab = paste("PC 1 ", round(pca.results$var.exp[1,1]*100,0), "%", sep = ""),
@@ -118,7 +88,7 @@ pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_PCALoading.pdf", sep="/"),
   mycol[mycol == 'LumB'] <- "blue"
   mycol[mycol == 'Healthy'] <- "pink"
   
-  pdf(file=paste(PLOTSDIR,  "subtypes_corrected_cpm10_PCAScore.pdf", sep="/"), 
+  pdf(file=paste(PLOTSDIR,  "subtypes_corrected_cpm10_PCAScore_2.pdf", sep="/"), 
       width = 5*2, height = 5)
   par(mfrow = c(1,2))
   
@@ -159,15 +129,14 @@ pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_PCALoading.pdf", sep="/"),
   pca.results <- pca.dat@dat$result
   
   ## Variance explained by each component
-  pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_arsyn_PCAVariance.pdf", sep="/"),
+  pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_arsyn_PCAVariance_2.pdf", sep="/"),
       width = 4*2, height = 4*2)
   barplot(pca.results$var.exp[,1], xlab = "PC", ylab = "Explained variance", ylim = c(0,0.4))
   dev.off()
   cat("PCA variance arsyn plot generated.\n")
   
-  
   ## Loading plot
-  pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_arsyn_PCALoading.pdf", sep="/"), 
+  pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_arsyn_PCALoading_2.pdf", sep="/"), 
       width = 4*2, height = 4*2)
   plot(pca.results$loadings[,1:2], col = 1, pch = 20, cex = 0.5,
        xlab = paste("PC 1 ", round(pca.results$var.exp[1,1]*100,0), "%", sep = ""),
@@ -186,7 +155,7 @@ pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_PCALoading.pdf", sep="/"),
   mycol[mycol == 'LumB'] <- "blue"
   mycol[mycol == 'Healthy'] <- "pink"
   
-  pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_arsyn_PCAScoreARSyN.pdf", sep="/"), 
+  pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_arsyn_PCAScoreARSyN_2.pdf", sep="/"), 
       width = 5*2, height = 5)
   par(mfrow = c(1,2))
   
@@ -215,7 +184,7 @@ pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_PCALoading.pdf", sep="/"),
   cat("PCA scores arsyn plot generated.\n")
   
   pl<-ggplot(data=melt(log(assayData(myARSyN)$exprs+1)), aes(x=value, group=Var2, colour=Var2))+geom_density(show.legend = F)
-  png(file=paste(PLOTSDIR, "corrected_cpm10_arsyn_densitylog.png",  sep="/"),
+  png(file=paste(PLOTSDIR, "corrected_cpm10_arsyn_densitylog_2.png",  sep="/"),
       width = 2048, height = 1024, pointsize = 20)
   print(pl)
   dev.off()
@@ -230,7 +199,7 @@ pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_PCALoading.pdf", sep="/"),
   stopifnot(all(row.names(data.subtypes.arsyn$M) == row.names(data.subtypes.arsyn$Annot)))
   
   
-  save(data.subtypes.arsyn, file="data_subtypes_arsyn.RData", compress="xz")
+  save(data.subtypes.arsyn, file="rdata/data_subtypes_arsyn.RData", compress="xz")
   
   cat("Generating data matrices with arsyn for Aracne\n")
   ## Data matrices for Aracne
@@ -261,6 +230,5 @@ pdf(file=paste(PLOTSDIR, "subtypes_corrected_cpm10_PCALoading.pdf", sep="/"),
   write.table(lumb, file = "LumB_cpm10_arsyn.tsv", sep="\t", quote=FALSE, row.names=FALSE)
   write.table(her2, file = "Her2_cpm10_arsyn.tsv", sep="\t", quote=FALSE, row.names=FALSE)
   write.table(healthy, file = "Healthy_cpm10_arsyn.tsv", sep="\t", quote=FALSE, row.names=FALSE)
-  
-  save(data.subtypes.arsyn, file="data_subtypes_arsyn.RData", 
-       compress="xz")
+
+ 
