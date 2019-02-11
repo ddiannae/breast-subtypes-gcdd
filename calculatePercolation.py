@@ -9,6 +9,10 @@ def getLCsizes(G) :
     lcsizes = [len(c) for c in sorted(nx.connected_components(G), key=len, reverse=True)]
     return(lcsizes)
 
+def chunk_file(f, chunksize=4096):
+    return iter(lambda: f.read(chunksize), b'')
+
+
 def getPercolationGraph(path, sample_size):
 
     colnames = ["label", "nodes",  "lc"]
@@ -20,8 +24,14 @@ def getPercolationGraph(path, sample_size):
         print("Working with condition: ", cond)
 
         graph = nx.Graph()
-        edges = nx.read_edgelist(path + cond + ".sif", delimiter = "\t",  data=(('MI',float), ))
-        graph.add_edges_from(edges.edges())
+
+        for chunk in pd.read_csv(path + cond + '.sif', delimiter="\t",
+                                 chunksize=5000, names = ["source", "target", "MI"]):
+            Gchunk = nx.from_pandas_edgelist(chunk, "source", "target", "MI")
+            print("New graph chunk with ", str(Gchunk.number_of_nodes()), " nodes")
+            graph.add_edges_from(Gchunk.edges())
+            print("Entire graph has ", str(graph.number_of_nodes()),
+                  " nodes and ",  str(graph.number_of_edges()), " edges")
 
         maxlcsizes = []
         nnodes = [graph.number_of_nodes()]
