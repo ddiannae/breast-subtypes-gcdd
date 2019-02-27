@@ -5,9 +5,8 @@ from random import sample
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def getLCsizes(G) :
-    lcsizes = [len(c) for c in sorted(nx.connected_components(G), key=len, reverse=True)]
-    return(lcsizes)
+def getComponentSizes(G) :
+    return([len(c) for c in sorted(nx.connected_components(G), key=len, reverse=True)])
 
 def chunk_file(f, chunksize=4096):
     return iter(lambda: f.read(chunksize), b'')
@@ -17,7 +16,7 @@ def getPercolationGraph(path, sample_size):
 
     colnames = ["label", "nodes",  "lc"]
     df = pd.DataFrame(columns=colnames)
-    conds = {"basal": "Basal", "luma": "LumA", "lumb": "LumB", "her2" : "Her2+", "healthy": "Healthy"}
+    conds = {"basal": "Basal", "luma": "LumA", "lumb": "LumB", "her2": "Her2+", "healthy": "Healthy"}
 
     for cond in conds.keys():
 
@@ -26,31 +25,39 @@ def getPercolationGraph(path, sample_size):
         graph = nx.Graph()
 
         for chunk in pd.read_csv(path + cond + '.sif', delimiter="\t",
-                                 chunksize=5000, names = ["source", "target", "MI"]):
+                                 chunksize=5000, names = ["source", "MI", "target"]):
             Gchunk = nx.from_pandas_edgelist(chunk, "source", "target", "MI")
             print("New graph chunk with ", str(Gchunk.number_of_nodes()), " nodes")
-            graph.add_edges_from(Gchunk.edges())
+            graph.add_edges_from(Gchunk.edges(data = True))
             print("Entire graph has ", str(graph.number_of_nodes()),
                   " nodes and ",  str(graph.number_of_edges()), " edges")
 
-        maxlcsizes = []
+        sortedEdges = sorted(graph.edges(data=True), key=lambda x: x[2]["MI"])
+        LCSizes = []
         nnodes = [graph.number_of_nodes()]
-        lcsizes = getLCsizes(graph)
-        if lcsizes:
-            maxlcsizes.append(lcsizes[0])
+        cSizes = getComponentSizes(graph)
+        if cSizes:
+            LCSizes.append(cSizes[0])
 
         while True:
-            out_nodes = sample(graph.nodes(), min(sample_size, graph.number_of_nodes()))
-            graph.remove_nodes_from(out_nodes)
-            lcsizes = getLCsizes(graph)
-            if lcsizes:
-                nnodes.append(graph.number_of_nodes())
-                maxlcsizes.append(lcsizes[0])
+            nToRemove = min(sample_size, graph.number_of_edges())
+            edgesToRemove = sortedEdges[0:nToRemove]
+            graph.remove_edges_from(edgesToRemove)
+            graph.remove_nodes_from(list(nx.isolates(graph)))
+            sortedEdges = [e for e in sortedEdges if e not in edgesToRemove]
+            cSizes = getComponentSizes(graph)
+            if cSizes:
+                if cSizes[0] > graph.number_of_nodes()/2:
+                    nnodes.append(graph.number_of_nodes())
+                    LCSizes.append(cSizes[0])
+                else:
+                    nnodes.append(graph.number_of_nodes())
+                    LCSizes.append(0)
             else:
                 break
-        df_cond = pd.DataFrame({colnames[0]: [cond] * len(maxlcsizes),
+        df_cond = pd.DataFrame({colnames[0]: [cond] * len(LCSizes),
                                 colnames[1]: nnodes,
-                                colnames[2]: maxlcsizes})
+                                colnames[2]: LCSizes})
         df = df.append(df_cond, sort=False)
 
     print("Saving plot")
@@ -65,8 +72,9 @@ def getPercolationGraph(path, sample_size):
     plt.legend()
     plt.gca().invert_xaxis()
     plt.grid(True)
-    plt.ylabel('Nodes in Largest Component')
+    plt.ylabel('Nodes in Giant Component')
     plt.xlabel('Nodes in Graph')
+    fig.set_size_inches(18.5, 10.5)
     fig.savefig('Percolation.png', dpi=fig.dpi)
 
 def main(args):
