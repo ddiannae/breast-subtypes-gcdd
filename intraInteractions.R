@@ -1,56 +1,102 @@
 library(data.table)
+library(ComplexHeatmap)
+library(circlize)
 start <- Sys.time()
 
 setwd("/mnt/ddisk/transpipeline-data/breast-data/subtypes")
 
-cat("Loading data\n")
 load("rdata/annot.RData")
 
 chrs <- c(as.character(1:22), "X")
 conds <- c("healthy", "luma", "lumb", "her2", "basal")
 
-getMatricesByCondAndChrs <- function (){
-  load("data_subtypes_arsyn.RData")
+getMIDistanceListByCondAndChrs <- function(){
+  cat("getMIDistanceListByCondAndChrs")
   for (cond in conds) {
-    ## Extract intra-chromosmal interactions
-    M <- data.subtypes.arsyn$M[, data.subtypes.arsyn$Targets$Subtype == cond]
-    g <- parallel::mclapply(X = chrs, mc.cores = 6, FUN = function(chr) {
-      
+    cat("Working with condition ", cond, "\n")
+    MImatrix <-fread( file = paste0("networks/aracne-cluster/1/", cond, ".tsv", sep = ""), 
+                          header = T, sep = "\t")
+    MImatrix <- data.matrix(MImatrix)
+    rownames(MImatrix) = colnames(MImatrix)
+    condvals <- lapply(X = chrs, FUN = function(chr) {
       cat("Working with chromosome", chr, "\n")
       genes.annot <- annot[annot$Chr == chr, ]
-      #genes <- genes.annot[, c("symbol", "start")]
-      genes <- genes.annot[, "EnsemblID", drop = FALSE]
-      interactions <- merge(genes, M, by = "row.names")
-      rownames(interactions) <- interactions$EnsemblID
-      interactions <- interactions[, colnames(M)]
-      save(interactions, file = paste("intra/", cond, "/", cond,"_chr_", chr, ".RData", sep = ""), compress="xz")
-      #interactions <- interactions[, c("symbol", colnames(M), "start")]
-      #interactions <- interactions[order(interactions$start), ]
-      #write.table(interactions, file = paste("intra/", cond, "/", cond,"_chr_", chr, ".txt", sep=""), 
-      #            sep="\t", quote=FALSE, row.names=FALSE, col.names = FALSE)
+      genes <- genes.annot$EnsemblID
+      ngenes <- length(genes)
+      chrvals <- parallel::mclapply(X = 1:(ngenes-1), mc.cores = 7,  mc.cleanup = FALSE, FUN = function(i) {
+        gene1 <- genes[i]
+        other.genes <- genes[(i+1):ngenes]
+        mivals <- lapply(X = other.genes, 
+                         FUN = function(gene2) {
+                           distance <- max(genes.annot[gene2, "Start"], genes.annot[gene1, "Start"]) - min(genes.annot[gene1, "Start"], genes.annot[gene2, "Start"])
+                           mi <- c(MImatrix[gene1, gene2], MImatrix[gene2, gene1])
+                           mi <- mi[!is.na(mi)]
+                           data.frame(source = gene1, target = gene2, distance = distance, mi = mi)
+                         })
+        plyr::ldply(mivals)
+      })
+      chrdf <- plyr::ldply(chrvals)
+      chrdf$chr <- chr
+      write.table(chrdf, file =  paste("intra/", cond, "/chr_", chr, "_distance_mi.txt", sep = ""), 
+                  row.names = F, col.names = T, sep = "\t", quote = F)  
+      chrdf
     })
+    conddf <- plyr::ldply(condvals)
+    conddf$cond <- cond
+    cat("Saving file.\n")
+    fwrite(conddf, file =  paste("intra/", cond,"_all_distance_mi.txt", sep = ""), 
+           row.names = F, col.names = T, sep = "\t")  
   }
 }
 
-## Execute order: 1
-MISifToMIMatrix <- function(){
-  genes <- annot$EnsemblID
-  ngenes <- length(genes)
-  MIunos <- data.table( source = genes, target = genes, MI = rep(1.0, length(genes)))
+annot <- read.delim("/mnt/ddisk/transpipeline-data/biomarts/Biomart_EnsemblG94_GRCh38_p12_NCBI.txt", stringsAsFactors = F)
+annot <- annot[!duplicated(annot$Gene.stable.ID), ]
+annot <- annot[annot$HGNC.symbol != "", ]
+colnames(annot) <- c("EnsemblID", "Chr", "Start", "End", "GC", "Type", "Symbol", "NCBI")
+chrs <- c(as.character(1))
+conds <- c("Healthy", "LumA", "LumB", "Her2", "Basal")
+
+getPearsonDistanceListByCondAndChrs <- function(){
+  cat("getMIDistanceListByCondAndChrs")
   for (cond in conds) {
     cat("Working with condition ", cond, "\n")
-    MIvals <- fread(paste(cond, "_MI.txt", sep =""), header = F, sep="\t", nThread = 7)
-    colnames(MIvals) <- c("source", "target", "MI")
-    MIvals <- rbind(MIvals, MIunos)
-    MIvals <- MIvals[order(source, target)]
-    MIvals <- data.table(matrix(MIvals$MI, nrow = ngenes, ncol = ngenes, byrow = T, dimnames = list(genes, genes)), keep.rownames=T)
-    fwrite(MIvals, file = paste("mi-matrices", paste(cond, "MI_matrix.txt", sep = "_"), sep="/"), 
-           sep = "\t", row.names = F, col.names = TRUE, quote = F)
-    }
+    MImatrix <-fread( file = paste0("pearson/CorMat-", cond, "-", "1.tsv", sep = ""), 
+                      header = T, sep = "\t")
+    MImatrix <- data.matrix(MImatrix)
+    rownames(MImatrix) = colnames(MImatrix)
+    condvals <- lapply(X = chrs, FUN = function(chr) {
+      cat("Working with chromosome", chr, "\n")
+      genes.annot <- annot[annot$Chr == chr & annot$Symbol %in% colnames(MImatrix), ]
+      rownames(genes.annot) <- genes.annot$Symbol
+      genes <- genes.annot$Symbol
+      ngenes <- length(genes)
+      chrvals <- parallel::mclapply(X = 1:(ngenes-1), mc.cores = 7,  mc.cleanup = FALSE, FUN = function(i) {
+        gene1 <- genes[i]
+        other.genes <- genes[(i+1):ngenes]
+        mivals <- lapply(X = other.genes, 
+                         FUN = function(gene2) {
+                           distance <- max(genes.annot[gene2, "Start"], genes.annot[gene1, "Start"]) - min(genes.annot[gene1, "Start"], genes.annot[gene2, "Start"])
+                           mi <- MImatrix[gene1, gene2]
+                           mi <- mi[!is.na(mi)]
+                           data.frame(source = gene1, target = gene2, distance = distance, mi = mi)
+                         })
+        plyr::ldply(mivals)
+      })
+      chrdf <- plyr::ldply(chrvals)
+      chrdf$chr <- chr
+      write.table(chrdf, file =  paste("intra-pearson/", cond, "/chr_", chr, "_distance_mi.txt", sep = ""), 
+                  row.names = F, col.names = T, sep = "\t", quote = F)  
+      chrdf
+    })
+    conddf <- plyr::ldply(condvals)
+    conddf$cond <- cond
+    cat("Saving file.\n")
+    fwrite(conddf, file =  paste("intra/", cond,"_all_distance_mi.txt", sep = ""), 
+           row.names = F, col.names = T, sep = "\t")  
+  }
 }
 
-library(ComplexHeatmap)
-library(circlize)
+getMIDistanceListByCondAndChrs()
 ## Execute order: 2
 getMIMatricesByChr <- function() {
   library(ComplexHeatmap)
@@ -82,42 +128,7 @@ getMIMatricesByChr <- function() {
   }
 }
 
-## Execute order: 3
-getMIDistanceListByCondAndChrs <- function(){
-  cat("getMIDistanceListByCondAndChrs")
-  for (cond in conds) {
-    cat("Working with condition ", cond, "\n")
-    condvals <- lapply(X = chrs, FUN = function(chr) {
-      cat("Working with chromosome", chr, "\n")
-      MIvals <-read.delim( file = paste("mi-matrices/bychr/", cond, "/chr_", chr, "_mi.txt", sep = ""), 
-                           row.names = 1, header = T, sep = "\t")  
-      genes <- rownames(MIvals)
-      genes.annot <- annot[genes,  ]
-      ngenes <- length(genes)
-      chrvals <- parallel::mclapply(X = 1:(ngenes-1), mc.cores = 7,  mc.cleanup = FALSE, FUN = function(i) {
-        gene1 <- genes[i]
-        other.genes <- genes[(i+1):ngenes]
-        mivals <- lapply(X = other.genes, 
-                         FUN = function(gene2) {
-                           distance <- max(genes.annot[gene2, "Start"], genes.annot[gene1, "Start"]) - min(genes.annot[gene1, "Start"], genes.annot[gene2, "Start"])
-                           mi <- MIvals[gene1, gene2]
-                           data.frame(source = gene1, target = gene2, distance = distance, mi = mi)
-                         })
-          plyr::ldply(mivals)
-      })
-      chrdf <- plyr::ldply(chrvals)
-      chrdf$chr <- chr
-      write.table(chrdf, file =  paste("intra/", cond, "/chr_", chr, "_distance_mi.txt", sep = ""), 
-                  row.names = F, col.names = T, sep = "\t", quote = F)  
-      chrdf
-    })
-    conddf <- plyr::ldply(condvals)
-    conddf$cond <- cond
-    cat("Saving file.\n")
-    fwrite(conddf, file =  paste("intra/", cond,"_all_distance_mi.txt", sep = ""), 
-                row.names = F, col.names = T, sep = "\t")  
-  }
-}
+
 
 getAllMIDistanceMeans <- function(binsize) {
   conditiondfs <- lapply(X = conds, FUN = function(cond){
@@ -145,7 +156,7 @@ getAllMIDistanceMeans <- function(binsize) {
               col.names = T, row.names = F, quote = F)
 }
 
-getAllMIDistanceMeans(100)
+getAllMIDistanceMeans(200)
 
 end <- Sys.time()
 cat("Whole thing took ", (end - start), "\n")
