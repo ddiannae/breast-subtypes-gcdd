@@ -1,15 +1,20 @@
+### It is available for Bioconductor 3.8 and previous versions
 require(pbcmc)
+
 library("BiocParallel")
 library("ggplot2")
 library("reshape2")
 library ("png") 
 library("NOISeq")
 
+data <- ""
+PLOTS <- "/mnt/ddisk/transpipeline-data/breast-data/subtypes/plots"
 setwd("/mnt/ddisk/transpipeline-data/breast-data/subtypes")
 load("/mnt/ddisk/transpipeline-data/breast-data/rdata/Length.full_GC.full_Between.tmm_Norm_cpm10.RData")
 
 #### Get Gene Symbols
-annot <- read.delim("/mnt/ddisk/transpipeline-data/biomarts/Biomart_EnsemblG94_GRCh38_p12_NCBI.txt", header = T, stringsAsFactors = F)
+annot <- read.delim("/mnt/ddisk/transpipeline-data/biomarts/Biomart_EnsemblG94_GRCh38_p12_NCBI.txt", 
+                    header = T, stringsAsFactors = F)
 genes <- merge(annot, norm.data.cpm10$Annot, by.x = "Gene.stable.ID", by.y = "EnsemblID")
 genes <- genes[!duplicated(genes$Gene.stable.ID), c("Gene.stable.ID", "HGNC.symbol", "NCBI.gene.ID")]
 names(genes)<-c("probe", "NCBI.gene.symbol", "EntrezGene.ID")
@@ -23,7 +28,6 @@ pam50obj <- classify(pam50obj, std="median", verbose = T)
 head(classification(pam50obj))
 parameters(pam50obj)
 
-### Troubles with the original permutate function
 pam50obj <- permutate(pam50obj, BPPARAM = MulticoreParam(workers = 7, progressbar = TRUE),  pCutoff = 0.05,  corCutoff = 0.05)
 subtypes <- permutation(pam50obj)$subtype
 
@@ -47,7 +51,6 @@ assigned.subtypes <- rbind(assigned.subtypes, healthy.subtypes)
 
 write.table(assigned.subtypes, file = "id-subtype.tsv", sep="\t", row.names = F, col.names = T, quote = F)
 
-PLOTSDIR <- "/mnt/ddisk/transpipeline-data/breast-data/subtypes/plots"
 #targets.merged <- read.delim("caseid-filename-subtype.tsv", sep="\t", header = T )
 
 ## Filtrar solo tumores con subtipos

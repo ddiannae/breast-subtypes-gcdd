@@ -1,14 +1,6 @@
 library(ggplot2)
 library(dplyr)
 library(data.table)
-setwd("/mnt/antares/mnt/ddisk/transpipeline-data/breast-data/subtypes")
-
-chrs <- c(as.character(1:22), "X")
-conds <- c("healthy", "luma", "lumb", "her2", "basal")
-
-annot <- read.delim("/mnt/antares/mnt/ddisk/transpipeline-data/biomarts/Biomart_EnsemblG94_GRCh38_p12_karyotype.txt",
-                    col.names = c("EnsemblID", "Chr", "Start", "End", "Band"), stringsAsFactors = F)
-annot <- annot[, c("EnsemblID", "Chr",  "Band")]
 
 all.cond <- lapply(conds, function(cond){
   network <- read.delim(paste0("networks/aracne-cluster/1e8/13319/", cond,"-13319-annotated.tsv"), 
@@ -20,13 +12,13 @@ all.cond <- lapply(conds, function(cond){
   network <- merge(annot, network, all.y = T)
   colnames(annot) <-  c("Target", "Target.Chr", "Target.Band")
   network <- merge(annot, network, all.y = T)
+
   network$InteractionType <- ifelse(network$Inter, "Trans", "Inter-Cytoband")
   network$InteractionType <- ifelse(network$Source.Band == network$Target.Band, "Intra-Cytoband", network$InteractionType)
   network$InteractionType <- factor(network$InteractionType, levels = c("Intra-Cytoband", "Inter-Cytoband", "Trans"))
   return(network)
 })
 all.cond <- rbindlist(all.cond)
-all.cond  %>% group_by(Cond, Inter) %>%  tally()
 all.cond <- all.cond[!is.na(all.cond$InteractionType), ]
 all.cond <- all.cond %>% group_by(Cond) %>% mutate(max.byCond.MI = max(MI))
 all.cond <- all.cond %>% mutate(norm.MI = MI / max.byCond.MI)
@@ -36,13 +28,13 @@ all.cond.summ.norm <- all.cond %>% group_by(Cond, InteractionType) %>% summarise
 all.cond.summ.norm$Cond <- factor(all.cond.summ.norm$Cond, levels = conds) 
 all.cond.summ.norm <- all.cond.summ.norm %>% arrange(Cond)
 
-ggplot(all.cond.summ.norm, aes(x = Cond, y = max.MI, group = InteractionType)) +   # group = id is important!
+ggplot(all.cond.summ, aes(x = Cond, y = mean.MI, group = InteractionType)) +   # group = id is important!
   geom_path(aes(size = n, color =InteractionType, y = mean.MI, group = InteractionType),
             alpha = 0.5,
             lineend = 'round', linejoin = 'round')  +
   scale_size(breaks = NULL, range = c(1, 5))
 
-115.8333#ggplot(network, aes(x = Distance, y = MI, color = InteractionType)) +
+#ggplot(network, aes(x = Distance, y = MI, color = InteractionType)) +
 #  geom_point() + 
 #  scale_color_manual(name = "Interaction", values =  c("#1696AC", "#73299e", "#C85200"))
 #dev.off()
