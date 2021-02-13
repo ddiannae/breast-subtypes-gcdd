@@ -1,0 +1,208 @@
+Searching for files in  /mnt/ddisk/transpipeline-data/breast-data/subtypes/networks/aracne-cluster/1/100k/
+Removing  1000  nodes per iteration
+Working with condition:  her2
+New graph chunk with  2710  nodes
+Entire graph has  2710  nodes and  5000  edges
+New graph chunk with  3557  nodes
+Entire graph has  4293  nodes and  10000  edges
+New graph chunk with  4033  nodes
+Entire graph has  5457  nodes and  15000  edges
+New graph chunk with  4293  nodes
+Entire graph has  6316  nodes and  20000  edges
+New graph chunk with  4689  nodes
+Entire graph has  7145  nodes and  25000  edges
+New graph chunk with  4879  nodes
+Entire graph has  7887  nodes and  30000  edges
+New graph chunk with  5077  nodes
+Entire graph has  8588  nodes and  35000  edges
+New graph chunk with  5373  nodes
+Entire graph has  9310  nodes and  40000  edges
+New graph chunk with  5547  nodes
+Entire graph has  9972  nodes and  45000  edges
+New graph chunk with  5719  nodes
+Entire graph has  10636  nodes and  50000  edges
+New graph chunk with  5924  nodes
+Entire graph has  11296  nodes and  55000  edges
+New graph chunk with  6039  nodes
+Entire graph has  11891  nodes and  60000  edges
+New graph chunk with  6168  nodes
+Entire graph has  12382  nodes and  65000  edges
+New graph chunk with  6333  nodes
+Entire graph has  12824  nodes and  70000  edges
+New graph chunk with  6486  nodes
+Entire graph has  13221  nodes and  75000  edges
+New graph chunk with  6494  nodes
+Entire graph has  13500  nodes and  80000  edges
+New graph chunk with  6588  nodes
+Entire graph has  13751  nodes and  85000  edges
+New graph chunk with  6667  nodes
+Entire graph has  13914  nodes and  90000  edges
+New graph chunk with  6747  nodes
+Entire graph has  14046  nodes and  95000  edges
+New graph chunk with  6715  nodes
+Entire graph has  14155  nodes and  100000  edges
+Working with condition:  basal
+New graph chunk with  3061  nodes
+Entire graph has  3061  nodes and  5000  edges
+New graph chunk with  3737  nodes
+Entire graph has  4560  nodes and  10000  edges
+New graph chunk with  4137  nodes
+Entire graph has  5578  nodes and  15000  edges
+New graph chunk with  4459  nodes
+Entire graph has  6361  nodes and  20000  edges
+New graph chunk with  4636  nodes
+Entire graph has  6972  nodes and  25000  edges
+New graph chunk with  4862  nodes
+Entire graph has  7513  nodes and  30000  edges
+New graph chunk with  4977  nodes
+Entire graph has  7947  nodes and  35000  edges
+New graph chunk with  5060  nodes
+Entire graph has  8346  nodes and  40000  edges
+New graph chunk with  5137  nodes
+Entire graph has  8650  nodes and  45000  edges
+New graph chunk with  5226  nodes
+Entire graph has  8910  nodes and  50000  edges
+New graph chunk with  5327  nodes
+Entire graph has  9164  nodes and  55000  edges
+New graph chunk with  5340  nodes
+Entire graph has  9391  nodes and  60000  edges
+New graph chunk with  5465  nodes
+Entire graph has  9617  nodes and  65000  edges
+New graph chunk with  5499  nodes
+Entire graph has  9832  nodes and  70000  edges
+New graph chunk with  5533  nodes
+Entire graph has  10021  nodes and  75000  edges
+New graph chunk with  5573  nodes
+Entire graph has  10188  nodes and  80000  edges
+New graph chunk with  5637  nodes
+Entire graph has  10354  nodes and  85000  edges
+New graph chunk with  5708  nodes
+Entire graph has  10551  nodes and  90000  edges
+New graph chunk with  5731  nodes
+Entire graph has  10730  nodes and  95000  edges
+New graph chunk with  5755  nodes
+Entire graph has  10895  nodes and  100000  edges
+Working with condition:  lumb
+New graph chunk with  3078  nodes
+Entire graph has  3078  nodes and  5000  edges
+New graph chunk with  3480  nodes
+Entire graph has  4458  nodes and  10000  edges
+New graph chunk with  3854  nodes
+Entire graph has  5443  nodes and  15000  edges
+New graph chunk with  4092  nodes
+Entire graph has  6217  nodes and  20000  edges
+New graph chunk with  4346  nodes
+Entire graph has  6866  nodes and  25000  edges
+New graph chunk with  4507  nodes
+Entire graph has  7403  nodes and  30000  edges
+New graph chunk with  4550  nodes
+Entire graph has  7798  nodes and  35000  edges
+New graph chunk with  4763  nodes
+Entire graph has  8169  nodes and  40000  edges
+New graph chunk with  4811  nodes
+Entire graph has  8516  nodes and  45000  edges
+New graph chunk with  4919  nodes
+Entire graph has  8817  nodes and  50000  edges
+New graph chunk with  4945  nodes
+Entire graph has  9059  nodes and  55000  edges
+New graph chunk with  5081  nodes
+Entire graph has  9338  nodes and  60000  edges
+New graph chunk with  5179  nodes
+Entire graph has  9574  nodes and  65000  edges
+New graph chunk with  5202  nodes
+Entire graph has  9817  nodes and  70000  edges
+New graph chunk with  5329  nodes
+Entire graph has  10052  nodes and  75000  edges
+New graph chunk with  5324  nodes
+Entire graph has  10267  nodes and  80000  edges
+New graph chunk with  5479  nodes
+Entire graph has  10515  nodes and  85000  edges
+New graph chunk with  5500  nodes
+Entire graph has  10750  nodes and  90000  edges
+New graph chunk with  5587  nodes
+Entire graph has  10985  nodes and  95000  edges
+New graph chunk with  5589  nodes
+Entire graph has  11212  nodes and  100000  edges
+Working with condition:  luma
+New graph chunk with  2565  nodes
+Entire graph has  2565  nodes and  5000  edges
+New graph chunk with  3130  nodes
+Entire graph has  4058  nodes and  10000  edges
+New graph chunk with  3576  nodes
+Entire graph has  5178  nodes and  15000  edges
+New graph chunk with  3799  nodes
+Entire graph has  5994  nodes and  20000  edges
+New graph chunk with  4010  nodes
+Entire graph has  6663  nodes and  25000  edges
+New graph chunk with  4232  nodes
+Entire graph has  7246  nodes and  30000  edges
+New graph chunk with  4422  nodes
+Entire graph has  7779  nodes and  35000  edges
+New graph chunk with  4495  nodes
+Entire graph has  8212  nodes and  40000  edges
+New graph chunk with  4730  nodes
+Entire graph has  8658  nodes and  45000  edges
+New graph chunk with  4818  nodes
+Entire graph has  9063  nodes and  50000  edges
+New graph chunk with  4904  nodes
+Entire graph has  9429  nodes and  55000  edges
+New graph chunk with  5037  nodes
+Entire graph has  9788  nodes and  60000  edges
+New graph chunk with  5197  nodes
+Entire graph has  10197  nodes and  65000  edges
+New graph chunk with  5261  nodes
+Entire graph has  10542  nodes and  70000  edges
+New graph chunk with  5359  nodes
+Entire graph has  10877  nodes and  75000  edges
+New graph chunk with  5477  nodes
+Entire graph has  11208  nodes and  80000  edges
+New graph chunk with  5646  nodes
+Entire graph has  11515  nodes and  85000  edges
+New graph chunk with  5781  nodes
+Entire graph has  11825  nodes and  90000  edges
+New graph chunk with  5807  nodes
+Entire graph has  12131  nodes and  95000  edges
+New graph chunk with  5942  nodes
+Entire graph has  12396  nodes and  100000  edges
+Working with condition:  healthy
+New graph chunk with  2266  nodes
+Entire graph has  2266  nodes and  5000  edges
+New graph chunk with  3357  nodes
+Entire graph has  3999  nodes and  10000  edges
+New graph chunk with  3847  nodes
+Entire graph has  5316  nodes and  15000  edges
+New graph chunk with  4155  nodes
+Entire graph has  6329  nodes and  20000  edges
+New graph chunk with  4385  nodes
+Entire graph has  7204  nodes and  25000  edges
+New graph chunk with  4499  nodes
+Entire graph has  7905  nodes and  30000  edges
+New graph chunk with  4620  nodes
+Entire graph has  8517  nodes and  35000  edges
+New graph chunk with  4835  nodes
+Entire graph has  9013  nodes and  40000  edges
+New graph chunk with  4822  nodes
+Entire graph has  9464  nodes and  45000  edges
+New graph chunk with  4950  nodes
+Entire graph has  9847  nodes and  50000  edges
+New graph chunk with  5063  nodes
+Entire graph has  10166  nodes and  55000  edges
+New graph chunk with  5044  nodes
+Entire graph has  10433  nodes and  60000  edges
+New graph chunk with  5113  nodes
+Entire graph has  10673  nodes and  65000  edges
+New graph chunk with  5225  nodes
+Entire graph has  10923  nodes and  70000  edges
+New graph chunk with  5211  nodes
+Entire graph has  11123  nodes and  75000  edges
+New graph chunk with  5293  nodes
+Entire graph has  11340  nodes and  80000  edges
+New graph chunk with  5318  nodes
+Entire graph has  11532  nodes and  85000  edges
+New graph chunk with  5356  nodes
+Entire graph has  11701  nodes and  90000  edges
+New graph chunk with  5353  nodes
+Entire graph has  11860  nodes and  95000  edges
+New graph chunk with  5464  nodes
+Entire graph has  11989  nodes and  100000  edges
+Saving plot
